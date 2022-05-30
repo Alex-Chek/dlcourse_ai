@@ -36,6 +36,7 @@ class KNN:
             return self.predict_labels_binary(dists)
         else:
             return self.predict_labels_multiclass(dists)
+        
 
     def compute_distances_two_loops(self, X):
         '''
@@ -55,8 +56,12 @@ class KNN:
         for i_test in range(num_test):
             for i_train in range(num_train):
                 # TODO: Fill dists[i_test][i_train]
-                pass
+#                 pass
+                dists[i_test][i_train] = np.sum(np.abs(X[i_test] - self.train_X[i_train]))
+        return dists
 
+
+    
     def compute_distances_one_loop(self, X):
         '''
         Computes L1 distance from every sample of X to every training sample
@@ -73,9 +78,16 @@ class KNN:
         num_test = X.shape[0]
         dists = np.zeros((num_test, num_train), np.float32)
         for i_test in range(num_test):
+            dists[i_test] = np.abs(
+                X[i_test] - self.train_X[i_test]
+            )
+        return dists
+
+        
             # TODO: Fill the whole row of dists[i_test]
             # without additional loops or list comprehensions
-            pass
+#             pass
+
 
     def compute_distances_no_loops(self, X):
         '''
@@ -92,30 +104,55 @@ class KNN:
         num_train = self.train_X.shape[0]
         num_test = X.shape[0]
         # Using float32 to to save memory - the default is float64
-        dists = np.zeros((num_test, num_train), np.float32)
+#         dists = np.zeros((num_test, num_train), np.float32)
         # TODO: Implement computing all distances with no loops!
-        pass
+        dists  = np.abs(
+            X[:, None] - self.train_X
+        ).sum(axis=2)
+        return dists
+
+#         pass
+
 
     def predict_labels_binary(self, dists):
-        '''
-        Returns model predictions for binary classification case
-        
-        Arguments:
-        dists, np array (num_test_samples, num_train_samples) - array
-           with distances between each test and each train sample
+    # def predict_labels_binary(dists):
+            '''
+            Returns model predictions for binary classification case
 
-        Returns:
-        pred, np array of bool (num_test_samples) - binary predictions 
-           for every test sample
-        '''
-        num_test = dists.shape[0]
-        pred = np.zeros(num_test, np.bool)
-        for i in range(num_test):
-            # TODO: Implement choosing best class based on k
-            # nearest training samples
-            pass
-        return pred
+            Arguments:
+            dists, np array (num_test_samples, num_train_samples) - array
+               with distances between each test and each train sample
 
+            Returns:
+            pred, np array of bool (num_test_samples) - binary predictions 
+               for every test sample
+            '''
+            num_test = dists.shape[0]
+            pred = np.zeros(num_test, np.bool)
+
+            distances = []
+            neighborses = []
+
+            for i in range(num_test):
+                neighbors = []
+                distances.append(sorted([ (a,b) for a,b in zip(dists[i], self.train_y) ]))
+
+                for x in range(self.k):
+                    neighbors.append(distances[i][x][1])    
+
+                neighborses.append(neighbors)
+
+                for n in neighborses:
+                    if sum(n) > len(n) // 2:
+                        pred[i]=(True)
+                    else:
+                        pred[i]=(False)
+                # TODO: Implement choosing best class based on k
+                # nearest training samples
+    #             pass
+            return pred
+    
+ 
     def predict_labels_multiclass(self, dists):
         '''
         Returns model predictions for multi-class classification case
@@ -129,10 +166,27 @@ class KNN:
            for every test sample
         '''
         num_test = dists.shape[0]
-        num_test = dists.shape[0]
         pred = np.zeros(num_test, np.int)
+        
+        distances = []
+        neighborses = []
+
         for i in range(num_test):
-            # TODO: Implement choosing best class based on k
-            # nearest training samples
-            pass
+            distances.append(sorted([ (a,b) for a,b in zip(dists[i], self.train_y) ]))
+
+            neighbors = []
+            for x in range(self.k):
+                neighbors.append(distances[i][x][1])
+                classVotes={}
+                for x in range(len(neighbors)):
+                    response = neighbors[x]
+                    if response in classVotes:
+                        classVotes[response] += 1
+                    else:
+                        classVotes[response] = 1
+
+            sortedVotes = sorted(classVotes.items(), key=lambda x: x[1], reverse=True)
+
+            pred[i] = (sortedVotes[0][0])
+
         return pred

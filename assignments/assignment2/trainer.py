@@ -3,6 +3,8 @@ from copy import deepcopy
 import numpy as np
 from metrics import multiclass_accuracy
 
+# from model import TwoLayerNet, Param
+from tqdm import tqdm
 
 class Dataset:
     """
@@ -70,6 +72,7 @@ class Trainer:
         for batch_indices in batches_indices:
             batch_X = X[batch_indices]
             pred_batch = self.model.predict(batch_X)
+            print(pred_batch)
             pred[batch_indices] = pred_batch
 
         return multiclass_accuracy(pred, y)
@@ -87,7 +90,7 @@ class Trainer:
         train_acc_history = []
         val_acc_history = []
         
-        for epoch in range(self.num_epochs):
+        for epoch in tqdm(range(self.num_epochs)):
             shuffled_indices = np.arange(num_train)
             np.random.shuffle(shuffled_indices)
             sections = np.arange(self.batch_size, num_train, self.batch_size)
@@ -95,12 +98,20 @@ class Trainer:
 
             batch_losses = []
 
-            for batch_indices in batches_indices:
+            for batch_indices in (batches_indices):
                 # TODO Generate batches based on batch_indices and
                 # use model to generate loss and gradients for all
                 # the params
-
-                raise Exception("Not implemented!")
+                try:
+                    
+                    X_b = self.dataset.train_X[batch_indices]
+                    y_b = self.dataset.train_y[batch_indices]
+                    
+                    loss = self.model.compute_loss_and_gradients(X_b, y_b)
+#                     batch_losses.append(loss)
+                
+                except:
+                    raise Exception("Not implemented!")
 
                 for param_name, param in self.model.params().items():
                     optimizer = self.optimizers[param_name]
